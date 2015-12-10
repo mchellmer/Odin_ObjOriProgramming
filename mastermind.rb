@@ -77,7 +77,7 @@ class Mastermind
       0.upto(3) do |i|
         if @code[i] == guess0[i]
           @feedback[i] = 'black'
-        elsif @code.include?(guess0[i]) && count[guesso[i]] > @code.count(guess0[i])
+        elsif @code.include?(guess0[i]) && count[guess0[i]] < @code.count(guess0[i])
           @feedback[i] = 'white'
           count[guess0[i]] += 1
         else
@@ -103,8 +103,8 @@ class Mastermind
     end
 
     good = false
+    guess0 = code_generate
     until good == true
-      guess0 = code_generate
       # Force guess to match entries of black
       @feed.each do |code,score|
         same = 0
@@ -116,7 +116,8 @@ class Mastermind
         if same == score.count('black')
           good = true
         else
-          break
+          guess0 = code_generate
+          good = false
         end
       end
     end
