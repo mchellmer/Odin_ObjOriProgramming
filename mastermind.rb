@@ -17,10 +17,10 @@ class Mastermind
     @codemaker = name
     @code = []
     @feedback = []
+    @feed = Hash.new
     @colors = ['red','green','blue','yellow','black','white']
-  end
+    @cpu_colors = @colors
   
-  def set_code
     if @codemaker == 'human'
         human
       elsif @codemaker == 'cpu'
@@ -44,9 +44,15 @@ class Mastermind
   def move
     case @codemaker
       when 'human'
-        guess0 = code_generate
-        guess(guess0)
-        @turn += 1
+        if @turn == 1
+          guess0 = code_generate
+          guess(guess0)
+          @turn += 1
+        else
+          guess0 = better_guess
+          guess(guess0)
+          @turn += 1
+        end
       when 'cpu'
         guess0 = code_entry
         guess(guess0)
@@ -64,23 +70,57 @@ class Mastermind
       @colors.each {|z| count[z] = 0}
       0.upto(3) do |i|
         if guess0[i] == @code[i]
-          @feedback[i] = 'black'
           count[guess0[i]] += 1
         end
       end
       
       0.upto(3) do |i|
-        if @code.include?(guess0[i]) && count[guess0[i]] < @code.count(guess0[i])
+        if @code[i] == guess0[i]
+          @feedback[i] = 'black'
+        elsif @code.include?(guess0[i]) && count[guesso[i]] > @code.count(guess0[i])
           @feedback[i] = 'white'
           count[guess0[i]] += 1
-        elsif @feedback[i] == 'black'
         else
           @feedback[i] = 'none'
         end
       end
       @feedback.shuffle!
-      puts "Try again, here is your feedback: #{@feedback}"
+      @feed[guess0] = @feedback
+      puts "Try again, here is your feedback: "
+      @feed.each {|key,value| puts "#{key}: #{value}"}
+      
     end
+  end
+  
+  def better_guess
+    # Disclude colors should an empty array feedback exist
+    @feed.each do |code,score|
+      if score.count('none') == 4
+        0.upto(3) do |i|
+          @cpu_colors.delete(code[i])
+        end
+      end
+    end
+
+    good = false
+    until good == true
+      guess0 = code_generate
+      # Force guess to match entries of black
+      @feed.each do |code,score|
+        same = 0
+        0.upto(3) do |i|
+          if code[i] == guess0[i]
+            same += 1
+          end
+        end
+        if same == score.count('black')
+          good = true
+        else
+          break
+        end
+      end
+    end
+    return guess0
   end
   
   def code_entry
@@ -102,8 +142,12 @@ class Mastermind
   
   def code_generate
     code0 = []
-    4.times {code0 <<  @colors[rand(6)]}
+    4.times {code0 <<  @cpu_colors[rand(@cpu_colors.length)]}
     return code0
+  end
+  
+  def test
+    return @code
   end
   
   private :code_entry, :human, :cpu, :code_generate, :guess
